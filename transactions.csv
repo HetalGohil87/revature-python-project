@@ -1,7 +1,0 @@
-Transaction,Amount,Balance
-Deposit,50.0,50.0
-Withdraw,10.0,40.0
-Deposit,50.0,50.0
-Withdraw,10.0,40.0
-Deposit,100.0,100.0
-Withdraw,30.0,70.0
