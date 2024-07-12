@@ -1,0 +1,134 @@
+# Banking Program
+
+import argparse
+import csv
+import os
+
+class BankAccount:
+    def __init__(self):
+        self.balance = 0.0
+
+    def show_balance(self):
+        print("*********************")
+        print(f"Your balance is ${self.balance:.2f}")
+        print("*********************")
+
+    def deposit(self, amount):
+        if amount < 0:
+            print("*********************")
+            print("That's not a valid amount")
+            print("*********************")
+            return 0
+        else:
+            self.balance += amount
+            return amount
+
+    def withdraw(self, amount):
+        if amount > self.balance:
+            print("*********************")
+            print("Insufficient funds")
+            print("*********************")
+            return 0
+        elif amount < 0:
+            print("*********************")
+            print("Amount must be greater than 0")
+            print("*********************")
+            return 0
+        else:
+            self.balance -= amount
+            return amount
+
+class CSVHandler:
+    def __init__(self, filepath):
+        self.filepath = filepath
+
+    def write_to_csv(self, data):
+        file_exists = os.path.isfile(self.filepath)
+        with open(self.filepath, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(['Transaction', 'Amount', 'Balance'])
+            writer.writerows(data)
+
+
+    def read_from_csv(self):
+        if not os.path.isfile(self.filepath):
+            return []
+
+        transactions = []
+        with open(self.filepath, mode='r', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                transactions.append(row)
+        return transactions
+
+
+class CLIApplication:
+    def __init__(self, csv_filepath):
+        self.bank_account = BankAccount()
+        self.csv_handler = CSVHandler(csv_filepath)
+        self.load_transactions()
+
+
+    def load_transactions(self):
+        transactions = self.csv_handler.read_from_csv()
+        for transaction in transactions:
+            amount = float(transaction['Amount'])
+            if transaction['Transaction'] == 'Deposit':
+                self.bank_account.balance += amount
+            elif transaction['Transaction'] == 'Withdraw':
+                self.bank_account.balance -= amount
+
+    def run(self):
+        transactions = []
+        is_running = True
+
+        while is_running:
+            print("*********************")
+            print("   Banking Program   ")
+            print("*********************")
+            print("1. Show Balance")
+            print("2. Deposit")
+            print("3. Withdraw")
+            print("4. Exit")
+            print("*********************")
+            choice = input("Enter your choice (1-4): ")
+
+            if choice == '1':
+                self.bank_account.show_balance()
+            elif choice == '2':
+                try:
+                    amount = float(input("Enter an amount to be deposited: "))
+                    deposited = self.bank_account.deposit(amount)
+                    if deposited > 0:
+                        transactions.append(["Deposit", deposited, self.bank_account.balance])
+                except ValueError:
+                    print("*********************")
+                    print("Invalid input. Please enter a valid amount.")
+                    print("*********************")
+            elif choice == '3':
+                try:
+                    amount = float(input("Enter amount to be withdrawn: "))
+                    withdrawn = self.bank_account.withdraw(amount)
+                    if withdrawn > 0:
+                        transactions.append(["Withdraw", withdrawn, self.bank_account.balance])
+                except ValueError:
+                    print("*********************")
+                    print("Invalid input. Please enter a valid amount.")
+                    print("*********************")
+            elif choice == '4':
+                is_running = False
+            else:
+                print("*********************")
+                print("That is not a valid choice")
+                print("*********************")
+
+        self.csv_handler.write_to_csv(transactions)
+        print("*********************")
+        print("Thank you! Have a nice day!")
+        print("*********************")
+
+if __name__ == '__main__':
+    file_path = r'C:/temp/data/transactions.csv'
+    app = CLIApplication(file_path)
+    app.run()

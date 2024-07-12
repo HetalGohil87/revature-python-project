@@ -1,0 +1,134 @@
+#Inventory Programming 
+
+class Product:
+    def __init__(self, name, description, quantity, price):
+        self.name = name
+        self.description = description
+        self.quantity = quantity
+        self.price = price
+
+    def __repr__(self):
+        return f"Product(Name: {self.name}, Description: {self.description}, Quantity: {self.quantity}, Price: {self.price})"
+    
+
+import csv
+import os
+
+class Inventory:
+    def __init__(self, filename):
+        self.products = []
+        self.filename = filename
+
+    def add_product(self, product):
+        self.products.append(product)
+
+    def remove_product(self, product_name):
+        self.products = [product for product in self.products if product.name != product_name]
+
+    def update_product_quantity(self, product_name, new_quantity):
+        for product in self.products:
+            if product.name == product_name:
+                product.quantity = new_quantity
+                return
+        raise ValueError(f"Product with name {product_name} not found.")
+
+    def write_to_csv(self):
+        file_exists = os.path.isfile(self.filename)
+        with open(self.filename, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(['Name', 'Description', 'Quantity', 'Price'])
+            for product in self.products:
+                writer.writerow([product.name, product.description, product.quantity, product.price])
+
+    def display_inventory(self):
+        for product in self.products:
+            print(product)
+
+
+import argparse
+
+class CLIApplication:
+    def __init__(self, csv_filename):
+        self.inventory = Inventory(csv_filename)
+
+    def validate_quantity(self, quantity):
+        try:
+            return float(quantity)
+        except ValueError:
+            raise ValueError("Invalid quantity. Please enter a number.")
+
+    def validate_price(self, price):
+        try:
+            price = float(price)
+            if price < 0:
+                raise ValueError("Price cannot be negative.")
+            return price
+        except ValueError:
+            raise ValueError("Invalid price. Please enter a non-negative number.")
+
+    def run(self):
+        parser = argparse.ArgumentParser(description="Inventory Management System CLI Application.")
+        subparsers = parser.add_subparsers(dest='command')
+
+        add_parser = subparsers.add_parser('add', help='Add a new product')
+        add_parser.add_argument('name', help='Product name')
+        add_parser.add_argument('description', help='Product description')
+        add_parser.add_argument('quantity', help='Product quantity')
+        add_parser.add_argument('price', help='Product price')
+
+        remove_parser = subparsers.add_parser('remove', help='Remove an existing product')
+        remove_parser.add_argument('name', help='Product name to remove')
+
+        update_parser = subparsers.add_parser('update', help='Update product quantity')
+        update_parser.add_argument('name', help='Product name')
+        update_parser.add_argument('quantity', help='New product quantity')
+
+        args = parser.parse_args()
+
+        if args.command == 'add':
+            try:
+                quantity = self.validate_quantity(args.quantity)
+                price = self.validate_price(args.price)
+                product = Product(args.name, args.description, quantity, price)
+                self.inventory.add_product(product)
+                print(f"Added: {product}")
+            except ValueError as e:
+                print(e)
+
+        elif args.command == 'remove':
+            self.inventory.remove_product(args.name)
+            print(f"Removed product with name: {args.name}")
+
+        elif args.command == 'update':
+            try:
+                quantity = self.validate_quantity(args.quantity)
+                self.inventory.update_product_quantity(args.name, quantity)
+                print(f"Updated quantity of product {args.name} to {quantity}")
+            except ValueError as e:
+                print(e)
+
+        else:
+            print(" Use 'add', 'remove', or 'update'.")
+
+        self.inventory.write_to_csv()
+        print(f"Inventory written to {self.inventory.filename}")
+        self.inventory.display_inventory()
+
+if __name__ == "__main__":
+    app = CLIApplication('inventory.csv')
+    
+
+     # Adding the provided products
+    initial_products = [
+        ("Foundation", "Medium coverage", "1 FL OZ", 28.00),
+        ("Tinted Moisturizer", "Light coverage", "1 FL OZ", 32.00),
+        ("Concealer", "Full Coverage", "0.45 OZ", 16.00),
+        ("Compact Powder", "Full Coverage", "0.3 OZ", 44.00)
+    ]
+
+    for name, description, quantity, price in initial_products:
+        product = Product(name, description, quantity, price)
+        app.inventory.add_product(product)
+
+    app.run()
